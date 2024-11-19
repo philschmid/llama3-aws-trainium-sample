@@ -46,14 +46,14 @@ def training_function(script_args, training_args):
         )
         
     # Create LoRA configuration
-    config = LoraConfig(
-        lora_alpha=8,
-        lora_dropout=0.05,
-        r=16,
-        bias="none",
-        target_modules="all-linear",
-        task_type="CAUSAL_LM",
-    )
+    # config = LoraConfig(
+    #     lora_alpha=8,
+    #     lora_dropout=0.05,
+    #     r=16,
+    #     bias="none",
+    #     target_modules="all-linear",
+    #     task_type="CAUSAL_LM",
+    # )
     
     
 
@@ -61,7 +61,7 @@ def training_function(script_args, training_args):
     trainer = NeuronSFTTrainer(
         model=model,
         args=training_args,
-        peft_config=config,
+        # peft_config=config,
         tokenizer=tokenizer,
         train_dataset=dataset,
     )
