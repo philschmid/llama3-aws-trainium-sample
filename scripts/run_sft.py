@@ -14,10 +14,27 @@ from trl import TrlParser
 from optimum.neuron import NeuronSFTConfig, NeuronSFTTrainer
 from optimum.neuron.distributed import lazy_load_for_parallelism
 
+LLAMA_3_CHAT_TEMPLATE = (
+    "{% for message in messages %}"
+        "{% if message['role'] == 'system' %}"
+            "{{ message['content'] }}"
+        "{% elif message['role'] == 'user' %}"
+            "{{ '\n\nHuman: ' + message['content'] +  eos_token }}"
+        "{% elif message['role'] == 'assistant' %}"
+            "{{ '\n\nAssistant: '  + message['content'] +  eos_token  }}"
+        "{% endif %}"
+    "{% endfor %}"
+    "{% if add_generation_prompt %}"
+    "{{ '\n\nAssistant: ' }}"
+    "{% endif %}"
+)
+
 def training_function(script_args, training_args):
     # load dataset and tokenizer
     dataset = load_dataset("json", data_files=script_args.dataset_path, split="train")
     tokenizer = AutoTokenizer.from_pretrained(script_args.model_id)
+    tokenizer.pad_token = tokenizer.eos_token
+    tokenizer.chat_template = LLAMA_3_CHAT_TEMPLATE
 
     # load model from the hub with a bnb config
     with lazy_load_for_parallelism(tensor_parallel_size=training_args.tensor_parallel_size):
@@ -47,7 +64,6 @@ def training_function(script_args, training_args):
         peft_config=config,
         tokenizer=tokenizer,
         train_dataset=dataset,
-        data_collator=default_data_collator,  # no special collator needed since we stacked the dataset
     )
 
     # Start training
